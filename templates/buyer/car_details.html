@@ -63,7 +63,25 @@ Marketplace{% endblock %} {% block content %}
             <p>{{ seller.created_at.strftime('%B %d, %Y') }}</p>
           </div>
 
-          <button type="button" class="btn btn-primary w-100 mb-2" disabled>
+          {% if session.get('user_id') and session.get('user_role') == 'buyer'
+          %}
+          <a
+            href="{{ url_for('send_purchase_request', car_id=car.id) }}"
+            class="btn btn-success w-100 mb-2"
+          >
+            📨 Send Purchase Request
+          </a>
+          {% elif session.get('user_id') %}
+          <button type="button" class="btn btn-secondary w-100 mb-2" disabled>
+            Only buyers can send requests
+          </button>
+          {% else %}
+          <a href="{{ url_for('login') }}" class="btn btn-primary w-100 mb-2">
+            Login to Send Request
+          </a>
+          {% endif %}
+
+          <button type="button" class="btn btn-outline-primary w-100" disabled>
             📞 Contact Seller (Coming Soon)
           </button>
         </div>

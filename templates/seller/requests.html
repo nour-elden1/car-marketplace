@@ -1,0 +1,198 @@
+{% extends "layout/base.html" %} {% block title %}Purchase Requests - Car
+Marketplace{% endblock %} {% block content %}
+<div class="container">
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <h1>Purchase Requests</h1>
+      <p class="text-muted">Manage purchase requests from buyers</p>
+    </div>
+  </div>
+
+  {% if requests %}
+  <div class="table-responsive">
+    <table class="table table-hover">
+      <thead class="table-dark">
+        <tr>
+          <th>Car Title</th>
+          <th>Buyer Name</th>
+          <th>Contact</th>
+          <th>Status</th>
+          <th>Date</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for req in requests %}
+        <tr>
+          <td>
+            <strong>{{ req.car.title }}</strong><br />
+            <small class="text-muted"
+              >{{ req.car.brand }} {{ req.car.model }} - {{ req.car.year
+              }}</small
+            >
+          </td>
+          <td>
+            <strong>{{ req.buyer_name }}</strong><br />
+            <small class="text-muted">{{ req.buyer_email }}</small>
+          </td>
+          <td>
+            <small>{{ req.buyer_phone }}</small>
+            {% if req.message %}
+            <br /><small class="text-muted"
+              ><em>"{{ req.message[:50] }}..."</em></small
+            >
+            {% endif %}
+          </td>
+          <td>
+            {% if req.status == 'Pending' %}
+            <span class="badge bg-warning text-dark">⏳ Pending</span>
+            {% elif req.status == 'Accepted' %}
+            <span class="badge bg-success">✓ Accepted</span>
+            {% elif req.status == 'Rejected' %}
+            <span class="badge bg-danger">✗ Rejected</span>
+            {% endif %}
+          </td>
+          <td>
+            <small class="text-muted"
+              >{{ req.created_at.strftime('%b %d, %Y') }}</small
+            >
+          </td>
+          <td>
+            {% if req.status == 'Pending' %}
+            <button
+              type="button"
+              class="btn btn-sm btn-success"
+              data-bs-toggle="modal"
+              data-bs-target="#acceptModal{{ req.id }}"
+            >
+              Accept
+            </button>
+            <button
+              type="button"
+              class="btn btn-sm btn-danger"
+              data-bs-toggle="modal"
+              data-bs-target="#rejectModal{{ req.id }}"
+            >
+              Reject
+            </button>
+            {% else %}
+            <span class="text-muted small">-</span>
+            {% endif %}
+          </td>
+        </tr>
+
+        <!-- Accept Modal -->
+        <div class="modal fade" id="acceptModal{{ req.id }}" tabindex="-1">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Accept Request?</h5>
+                <button
+                  type="button"
+                  class="btn-close btn-close-white"
+                  data-bs-dismiss="modal"
+                ></button>
+              </div>
+              <div class="modal-body">
+                <p>
+                  Accept purchase request from
+                  <strong>{{ req.buyer_name }}</strong>?
+                </p>
+                <p class="text-muted small">
+                  Car: {{ req.car.title }}<br />
+                  Buyer Email: {{ req.buyer_email }}<br />
+                  Buyer Phone: {{ req.buyer_phone }}
+                </p>
+              </div>
+              <div class="modal-footer">
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  data-bs-dismiss="modal"
+                >
+                  Cancel
+                </button>
+                <form
+                  method="POST"
+                  action="{{ url_for('accept_request', request_id=req.id) }}"
+                  style="display: inline"
+                >
+                  <button type="submit" class="btn btn-success">Accept</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reject Modal -->
+        <div class="modal fade" id="rejectModal{{ req.id }}" tabindex="-1">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Reject Request?</h5>
+                <button
+                  type="button"
+                  class="btn-close btn-close-white"
+                  data-bs-dismiss="modal"
+                ></button>
+              </div>
+              <div class="modal-body">
+                <p>
+                  Reject purchase request from
+                  <strong>{{ req.buyer_name }}</strong>?
+                </p>
+                <p class="text-muted small">
+                  Car: {{ req.car.title }}<br />
+                  Buyer Email: {{ req.buyer_email }}<br />
+                  Buyer Phone: {{ req.buyer_phone }}
+                </p>
+              </div>
+              <div class="modal-footer">
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  data-bs-dismiss="modal"
+                >
+                  Cancel
+                </button>
+                <form
+                  method="POST"
+                  action="{{ url_for('reject_request', request_id=req.id) }}"
+                  style="display: inline"
+                >
+                  <button type="submit" class="btn btn-danger">Reject</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Stats -->
+  <div class="row mt-4">
+    <div class="col-md-12">
+      <div class="alert alert-info">
+        <strong>Summary:</strong>
+        Total Requests: {{ requests|length }} | Pending: {{
+        requests|selectattr('status', 'equalto', 'Pending')|list|length }} |
+        Accepted: {{ requests|selectattr('status', 'equalto',
+        'Accepted')|list|length }} | Rejected: {{ requests|selectattr('status',
+        'equalto', 'Rejected')|list|length }}
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="alert alert-info text-center py-5">
+    <h5>No Purchase Requests</h5>
+    <p class="mb-0">
+      You don't have any purchase requests yet.
+      <a href="{{ url_for('seller_dashboard') }}">View your cars</a> to wait for
+      buyer requests!
+    </p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

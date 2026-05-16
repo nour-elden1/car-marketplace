@@ -1,0 +1,98 @@
+{% extends "layout/base.html" %} {% block title %}My Purchase Requests - Car
+Marketplace{% endblock %} {% block content %}
+<div class="container">
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <h1>My Purchase Requests</h1>
+      <p class="text-muted">
+        Track all your purchase requests and seller responses
+      </p>
+    </div>
+  </div>
+
+  {% if requests %}
+  <div class="row">
+    {% for req in requests %}
+    <div class="col-md-6 mb-4">
+      <div class="card h-100">
+        <!-- Car Image -->
+        <div class="row g-0">
+          <div class="col-md-4">
+            {% if req.car.image %}
+            <img
+              src="{{ url_for('static', filename='uploads/' + req.car.image) }}"
+              class="img-fluid rounded-start h-100"
+              alt="{{ req.car.title }}"
+              style="object-fit: cover; height: 200px"
+            />
+            {% else %}
+            <div
+              class="bg-secondary d-flex align-items-center justify-content-center"
+              style="height: 200px; color: white"
+            >
+              <span>No Image</span>
+            </div>
+            {% endif %}
+          </div>
+
+          <div class="col-md-8">
+            <div class="card-body">
+              <!-- Car Title -->
+              <h5 class="card-title">{{ req.car.title }}</h5>
+
+              <!-- Car Details -->
+              <p class="card-text text-muted small">
+                <strong>{{ req.car.brand }} {{ req.car.model }}</strong> - {{
+                req.car.year }}<br />
+                Price: ৳ {{ "%.2f"|format(req.car.price) }}
+              </p>
+
+              <!-- Seller Info -->
+              <div class="mb-3 pb-3 border-bottom">
+                <p class="mb-1 small">
+                  <strong>Seller:</strong> {{ req.seller.name }}<br />
+                  <strong>Email:</strong> {{ req.seller.email }}
+                </p>
+              </div>
+
+              <!-- Status Badge -->
+              <div class="mb-2">
+                {% if req.status == 'Pending' %}
+                <span class="badge bg-warning text-dark">⏳ Pending</span>
+                {% elif req.status == 'Accepted' %}
+                <span class="badge bg-success">✓ Accepted</span>
+                {% elif req.status == 'Rejected' %}
+                <span class="badge bg-danger">✗ Rejected</span>
+                {% endif %}
+              </div>
+
+              <!-- Date -->
+              <p class="small text-muted mb-0">
+                Requested: {{ req.created_at.strftime('%b %d, %Y at %H:%M') }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Message -->
+        {% if req.message %}
+        <div class="card-footer bg-light">
+          <p class="mb-0 small"><strong>Your Message:</strong></p>
+          <p class="mb-0 small text-muted">{{ req.message }}</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="alert alert-info text-center py-5">
+    <h5>No Purchase Requests</h5>
+    <p class="mb-0">
+      You haven't sent any purchase requests yet.
+      <a href="{{ url_for('buyer_dashboard') }}">Browse cars</a> to get started!
+    </p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

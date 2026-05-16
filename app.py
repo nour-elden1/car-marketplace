@@ -68,6 +68,31 @@ class Car(db.Model):
         return f'<Car {self.title}>'
 
 
+class PurchaseRequest(db.Model):
+    """Model for car purchase requests from buyers"""
+    __tablename__ = 'purchase_requests'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    buyer_name = db.Column(db.String(100), nullable=False)
+    buyer_email = db.Column(db.String(120), nullable=False)
+    buyer_phone = db.Column(db.String(20), nullable=False)
+    message = db.Column(db.Text, nullable=True)
+    status = db.Column(db.String(20), default='Pending')  # Pending, Accepted, Rejected
+    car_id = db.Column(db.Integer, db.ForeignKey('cars.id'), nullable=False)
+    seller_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    buyer_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    car = db.relationship('Car', backref='requests')
+    seller = db.relationship('User', foreign_keys=[seller_id], backref='seller_requests')
+    buyer = db.relationship('User', foreign_keys=[buyer_id], backref='buyer_requests')
+    
+    def __repr__(self):
+        return f'<PurchaseRequest {self.id}>'
+
+
 # =====================
 # Helper Functions
 # =====================
@@ -401,6 +426,131 @@ def delete_car(car_id):
         return redirect(url_for('admin_dashboard'))
     else:
         return redirect(url_for('seller_dashboard'))
+
+
+# =====================
+# Purchase Request Routes
+# =====================
+
+@app.route('/buyer/send-request/<int:car_id>', methods=['GET', 'POST'])
+@login_required
+def send_purchase_request(car_id):
+    """Send a purchase request for a car"""
+    if session.get('user_role') not in ['buyer', 'admin']:
+        flash('Only buyers can send purchase requests.', 'danger')
+        return redirect(url_for('index'))
+    
+    car = Car.query.get_or_404(car_id)
+    
+    if request.method == 'POST':
+        buyer_name = request.form.get('buyer_name')
+        buyer_email = request.form.get('buyer_email')
+        buyer_phone = request.form.get('buyer_phone')
+        message = request.form.get('message')
+        
+        # Validation
+        if not all([buyer_name, buyer_email, buyer_phone]):
+            flash('All fields are required.', 'danger')
+            return redirect(url_for('send_purchase_request', car_id=car_id))
+        
+        # Check if buyer already sent a request for this car
+        existing_request = PurchaseRequest.query.filter_by(
+            car_id=car_id,
+            buyer_id=session.get('user_id'),
+            status='Pending'
+        ).first()
+        
+        if existing_request:
+            flash('You already have a pending request for this car.', 'warning')
+            return redirect(url_for('view_car_details', car_id=car_id))
+        
+        # Create new purchase request
+        new_request = PurchaseRequest(
+            buyer_name=buyer_name,
+            buyer_email=buyer_email,
+            buyer_phone=buyer_phone,
+            message=message,
+            car_id=car_id,
+            seller_id=car.seller_id,
+            buyer_id=session.get('user_id'),
+            status='Pending'
+        )
+        
+        db.session.add(new_request)
+        db.session.commit()
+        
+        flash('Purchase request sent successfully!', 'success')
+        return redirect(url_for('buyer_requests'))
+    
+    return render_template('buyer/send_request.html', car=car)
+
+
+@app.route('/buyer/requests')
+@login_required
+def buyer_requests():
+    """View all purchase requests sent by buyer"""
+    if session.get('user_role') not in ['buyer', 'admin']:
+        flash('Access denied.', 'danger')
+        return redirect(url_for('index'))
+    
+    user_id = session.get('user_id')
+    requests = PurchaseRequest.query.filter_by(buyer_id=user_id).order_by(PurchaseRequest.created_at.desc()).all()
+    
+    return render_template('buyer/my_requests.html', requests=requests)
+
+
+@app.route('/seller/requests')
+@seller_required
+def seller_requests():
+    """View all purchase requests for seller's cars"""
+    user_id = session.get('user_id')
+    
+    # Get all requests for cars belonging to this seller
+    requests = db.session.query(PurchaseRequest).join(Car).filter(
+        Car.seller_id == user_id
+    ).order_by(PurchaseRequest.created_at.desc()).all()
+    
+    return render_template('seller/requests.html', requests=requests)
+
+
+@app.route('/seller/accept-request/<int:request_id>', methods=['POST'])
+@seller_required
+def accept_request(request_id):
+    """Accept a purchase request"""
+    purchase_request = PurchaseRequest.query.get_or_404(request_id)
+    user_id = session.get('user_id')
+    
+    # Verify the request belongs to a car owned by this seller
+    if purchase_request.car.seller_id != user_id:
+        flash('Access denied.', 'danger')
+        return redirect(url_for('seller_requests'))
+    
+    purchase_request.status = 'Accepted'
+    purchase_request.updated_at = datetime.utcnow()
+    db.session.commit()
+    
+    flash(f'Request from {purchase_request.buyer_name} accepted!', 'success')
+    return redirect(url_for('seller_requests'))
+
+
+@app.route('/seller/reject-request/<int:request_id>', methods=['POST'])
+@seller_required
+def reject_request(request_id):
+    """Reject a purchase request"""
+    purchase_request = PurchaseRequest.query.get_or_404(request_id)
+    user_id = session.get('user_id')
+    
+    # Verify the request belongs to a car owned by this seller
+    if purchase_request.car.seller_id != user_id:
+        flash('Access denied.', 'danger')
+        return redirect(url_for('seller_requests'))
+    
+    purchase_request.status = 'Rejected'
+    purchase_request.updated_at = datetime.utcnow()
+    db.session.commit()
+    
+    flash(f'Request from {purchase_request.buyer_name} rejected.', 'info')
+    return redirect(url_for('seller_requests'))
 
 
 # =====================

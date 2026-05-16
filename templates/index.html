@@ -1,0 +1,111 @@
+{% extends "layout/base.html" %} {% block title %}Home - Car Marketplace{%
+endblock %} {% block content %}
+<div class="container">
+  <!-- Hero Section -->
+  <div
+    class="row mb-5 align-items-center"
+    style="
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 10px;
+      padding: 50px;
+      color: white;
+    "
+  >
+    <div class="col-md-6">
+      <h1 class="display-4 fw-bold mb-3">Find Your Perfect Car</h1>
+      <p class="lead mb-4">
+        Browse thousands of cars from trusted sellers. Easy, safe, and
+        transparent.
+      </p>
+      {% if current_user %}
+      <a href="{{ url_for('buyer_dashboard') }}" class="btn btn-light btn-lg"
+        >Browse Cars</a
+      >
+      {% else %}
+      <a href="{{ url_for('register') }}" class="btn btn-light btn-lg"
+        >Get Started</a
+      >
+      {% endif %}
+    </div>
+    <div class="col-md-6 text-center">
+      <h2 style="font-size: 100px">🚗</h2>
+    </div>
+  </div>
+
+  <!-- Featured Cars -->
+  <h2 class="mb-4">Featured Cars</h2>
+  {% if cars %}
+  <div class="row">
+    {% for car in cars[:6] %}
+    <div class="col-md-4 mb-4">
+      <div class="card h-100 shadow-sm hover-card">
+        <img
+          src="{{ url_for('static', filename='uploads/' + car.image) }}"
+          class="card-img-top"
+          alt="{{ car.title }}"
+          style="height: 250px; object-fit: cover"
+        />
+        <div class="card-body">
+          <h5 class="card-title">{{ car.title }}</h5>
+          <p class="card-text text-muted">
+            {{ car.brand }} {{ car.model }} - {{ car.year }}
+          </p>
+          <p
+            class="card-text"
+            style="color: #667eea; font-size: 24px; font-weight: bold"
+          >
+            ${{ "%.2f"|format(car.price) }}
+          </p>
+          <p class="card-text small text-truncate">{{ car.description }}</p>
+        </div>
+        <div class="card-footer bg-white">
+          <a
+            href="{{ url_for('view_car_details', car_id=car.id) }}"
+            class="btn btn-primary btn-sm w-100"
+            >View Details</a
+          >
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% if cars|length > 6 %}
+  <div class="text-center mt-4">
+    {% if current_user %}
+    <a href="{{ url_for('buyer_dashboard') }}" class="btn btn-primary btn-lg"
+      >View All Cars</a
+    >
+    {% else %}
+    <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg"
+      >View All Cars</a
+    >
+    {% endif %}
+  </div>
+  {% endif %} {% else %}
+  <div class="alert alert-info text-center py-5">
+    <h5>No cars available yet</h5>
+    <p>Check back soon for more listings!</p>
+  </div>
+  {% endif %}
+
+  <!-- Info Section -->
+  <div class="row mt-5 mb-5">
+    <div class="col-md-4 text-center mb-3">
+      <div style="font-size: 40px; margin-bottom: 15px">✅</div>
+      <h5>Verified Sellers</h5>
+      <p>All sellers are verified for your safety and peace of mind.</p>
+    </div>
+    <div class="col-md-4 text-center mb-3">
+      <div style="font-size: 40px; margin-bottom: 15px">💰</div>
+      <h5>Best Prices</h5>
+      <p>Compare prices and find the best deals on cars.</p>
+    </div>
+    <div class="col-md-4 text-center mb-3">
+      <div style="font-size: 40px; margin-bottom: 15px">🔒</div>
+      <h5>Secure Platform</h5>
+      <p>Your data is safe with our secure platform.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}

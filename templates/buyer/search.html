@@ -1,0 +1,106 @@
+{% extends "layout/base.html" %} {% block title %}Search Results - Car
+Marketplace{% endblock %} {% block content %}
+<div class="container">
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <a href="{{ url_for('buyer_dashboard') }}" class="btn btn-secondary mb-3"
+        >← Back</a
+      >
+      <h1>Search Results for "{{ keyword }}"</h1>
+      <p class="text-muted">Found {{ cars.total }} cars</p>
+    </div>
+  </div>
+
+  <!-- Cars Grid -->
+  {% if cars.items %}
+  <div class="row">
+    {% for car in cars.items %}
+    <div class="col-md-4 mb-4">
+      <div class="card h-100 car-card">
+        {% if car.image %}
+        <img
+          src="{{ url_for('static', filename='uploads/' + car.image) }}"
+          class="card-img-top"
+          alt="{{ car.title }}"
+          style="height: 250px; object-fit: cover"
+        />
+        {% else %}
+        <div
+          class="card-img-top bg-secondary d-flex align-items-center justify-content-center"
+          style="height: 250px; color: white"
+        >
+          <span>No Image</span>
+        </div>
+        {% endif %}
+
+        <div class="card-body">
+          <h5 class="card-title">{{ car.title }}</h5>
+          <p class="card-text text-muted">
+            <strong>{{ car.brand }} {{ car.model }}</strong> - {{ car.year }}
+          </p>
+          <p class="card-text">
+            {{ car.description[:100] if car.description else 'No description'
+            }}...
+          </p>
+        </div>
+
+        <div class="card-footer bg-white border-top">
+          <p class="h5 mb-2">৳ {{ "%.2f"|format(car.price) }}</p>
+          <p class="text-muted small">Seller: {{ car.seller.name }}</p>
+          <a
+            href="{{ url_for('car_detail', car_id=car.id) }}"
+            class="btn btn-primary btn-sm w-100"
+          >
+            View Details
+          </a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Pagination -->
+  {% if cars.pages > 1 %}
+  <nav aria-label="Page navigation" class="mt-4">
+    <ul class="pagination justify-content-center">
+      {% if cars.has_prev %}
+      <li class="page-item">
+        <a
+          class="page-link"
+          href="{{ url_for('search_cars', keyword=keyword, page=cars.prev_num) }}"
+          >Previous</a
+        >
+      </li>
+      {% endif %} {% for page_num in cars.iter_pages() %} {% if page_num %} {%
+      if page_num == cars.page %}
+      <li class="page-item active">
+        <span class="page-link">{{ page_num }}</span>
+      </li>
+      {% else %}
+      <li class="page-item">
+        <a
+          class="page-link"
+          href="{{ url_for('search_cars', keyword=keyword, page=page_num) }}"
+          >{{ page_num }}</a
+        >
+      </li>
+      {% endif %} {% endif %} {% endfor %} {% if cars.has_next %}
+      <li class="page-item">
+        <a
+          class="page-link"
+          href="{{ url_for('search_cars', keyword=keyword, page=cars.next_num) }}"
+          >Next</a
+        >
+      </li>
+      {% endif %}
+    </ul>
+  </nav>
+  {% endif %} {% else %}
+  <div class="alert alert-info text-center py-5">
+    <p class="mb-0">
+      No cars found matching your search. Try different keywords.
+    </p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

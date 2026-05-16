@@ -1,0 +1,27 @@
+{% extends "layout/base.html" %}
+{% block title %}Browse Cars - Car Marketplace{% endblock %}
+{% block content %}
+<div class="container">
+  <h2 class="mb-4">Browse All Cars</h2>
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <form method="GET" class="input-group">
+        <input type="text" class="form-control" name="search" placeholder="Search by title, brand, or model..." value="{{ search }}" />
+        <button class="btn btn-primary" type="submit">Search</button>
+      </form>
+    </div>
+    <div class="col-md-6">
+      <form method="GET" class="input-group">
+        <select class="form-select" name="brand" onchange="this.form.submit()">
+          <option value="">Filter by Brand</option>
+          {% for brand in brands %}
+          <option value="{{ brand }}" {% if brand == brand_filter %}selected{% endif %}>{{ brand }}</option>
+          {% endfor %}
+        </select>
+      </form>
+    </div>
+  </div>
+  {% if search or brand_filter %}<div class="mb-3"><a href="{{ url_for('buyer_dashboard') }}" class="btn btn-secondary btn-sm">Clear Filters</a></div>{% endif %}
+  {% if cars %}<div class="row">{% for car in cars %}<div class="col-md-4 mb-4"><div class="card h-100 shadow-sm hover-card"><img src="{{ url_for('static', filename='uploads/' + car.image) }}" class="card-img-top" alt="{{ car.title }}" style="height: 250px; object-fit: cover" /><div class="card-body"><h5 class="card-title">{{ car.title }}</h5><p class="card-text text-muted"><strong>{{ car.brand }} {{ car.model }}</strong> - {{ car.year }}</p><p class="card-text" style="color: #667eea; font-size: 24px; font-weight: bold">${{ "%.2f"|format(car.price) }}</p><p class="card-text small text-truncate">{{ car.description }}</p><div class="text-muted small"><p class="mb-0">Seller: <strong>{{ car.seller.name }}</strong></p></div></div><div class="card-footer bg-white"><a href="{{ url_for('view_car_details', car_id=car.id) }}" class="btn btn-primary btn-sm w-100">View Details</a></div></div></div>{% endfor %}</div>{% else %}<div class="alert alert-warning text-center py-5"><h5>No cars found</h5><p>Try adjusting your search filters or check back later.</p><a href="{{ url_for('buyer_dashboard') }}" class="btn btn-primary">View All Cars</a></div>{% endif %}
+</div>
+{% endblock %}
